@@ -1,0 +1,78 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<pthread.h>
+
+int arr[10000];
+
+pthread_mutex_t mut;
+
+
+
+void * add(void * arg)
+{
+	int sum=0;
+	int start =(int)arg;//from where to start
+	int loopsize =start+1000;//where to end
+	for(int i=start;i<loopsize;i++)
+	{
+		pthread_mutex_lock(&mut);
+		sum=sum + arr[i];//specific element is added to the sum
+		pthread_mutex_unlock(&mut);
+	}
+	return (void*)sum;// sum converted to generic type and returned
+}
+
+
+void * creat_threads()
+{
+	
+	pthread_t thread[10];// 10 threads
+
+	void *returned[10];//pointer array
+
+	int sum=0;//total summ
+
+	for(int i=0;i<10;i++)
+		pthread_create(&thread[i],NULL,add,(void *)(i*1000));//threads created. Every thread will call the function with starting of that part of array they want to sum
+
+	pthread_join(thread[0],&returned[0]);
+	pthread_join(thread[1],&returned[1]);
+	pthread_join(thread[2],&returned[2]);
+	pthread_join(thread[3],&returned[3]);
+	pthread_join(thread[4],&returned[4]);
+	pthread_join(thread[5],&returned[5]);
+	pthread_join(thread[6],&returned[6]);
+	pthread_join(thread[7],&returned[7]);
+	pthread_join(thread[8],&returned[8]);
+	pthread_join(thread[9],&returned[9]);//waiting for every thread to return sum of their part
+
+	for(int i=0;i<10;i++)
+		sum=sum + (int)returned[i];// converting from generic type to the int type for addition
+		
+	return (void*)sum;
+
+}
+
+
+void main()
+{
+	for(int i=0;i<10000;i++)
+		arr[i]=i;//initializing array
+	
+	
+	pthread_t parent;
+	pthread_mutex_init(&mut,NULL);
+
+	void * value;
+
+	pthread_create(&parent,NULL,creat_threads,NULL);
+	
+	pthread_join(parent,&value);
+	
+	pthread_mutex_destroy(&mut);
+
+	int sum=(int)value;
+
+	printf("\nsum : %i\n",sum);// printing sum as (sum : 49995000)
+
+}
